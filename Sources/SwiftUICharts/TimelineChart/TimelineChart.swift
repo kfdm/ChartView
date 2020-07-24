@@ -13,7 +13,6 @@ public struct TimelineChart: View {
     public var title: String?
     public var legend: String?
     public var style: ChartStyle
-    public var valueSpecifier:String
     
     @Environment(\.colorScheme) var colorScheme: ColorScheme
     @State private var showLegend = false
@@ -22,8 +21,9 @@ public struct TimelineChart: View {
     @State private var closestPoint: CGPoint = .zero
     @State private var opacity:Double = 0
     @State private var currentDataNumber: Double = 0
+    @State private var currentDataString: String = "Format here"
     @State private var hideHorizontalLines: Bool = false
-
+    
     public var body: some View {
         GeometryReader{ geometry in
             VStack(alignment: .leading, spacing: 8) {
@@ -68,7 +68,7 @@ public struct TimelineChart: View {
                     }
                     .frame(width: geometry.frame(in: .local).size.width, height: 240)
                     .offset(x: 0, y: 40 )
-                    MagnifierRect(currentNumber: self.$currentDataNumber, valueSpecifier: self.valueSpecifier)
+                    HoverView(currentNumber: self.$currentDataNumber, currentLabel:  self.$currentDataString, scheme: style)
                         .opacity(self.opacity)
                         .offset(x: self.dragLocation.x - geometry.frame(in: .local).size.width/2, y: 36)
                 }
@@ -104,13 +104,32 @@ public struct TimelineChart: View {
     }
 }
 
+public struct HoverView: View {
+    @Binding var currentNumber: Double
+    @Binding var currentLabel: String
+    var scheme: ChartStyle
+    
+    public var body: some View {
+        ZStack{
+            Text("\(self.currentNumber, specifier: self.currentLabel)")
+                .font(.system(size: 18, weight: .bold))
+                .offset(x: 0, y:-110)
+                .foregroundColor(self.scheme.textColor)
+            RoundedRectangle(cornerRadius: 16)
+                .frame(width: 60, height: 280)
+                .foregroundColor(Color.white)
+                .shadow(color: Colors.LegendText, radius: 12, x: 0, y: 6 )
+                .blendMode(.multiply)
+        }
+    }
+}
+
 extension TimelineChart {
     public init(title: String, data: ChartData) {
         self.data = data
         self.title = title
         self.legend = "Legend"
         self.style = Styles.lineChartStyleOne
-        self.valueSpecifier = "Value Specifieir"
     }
 }
 
