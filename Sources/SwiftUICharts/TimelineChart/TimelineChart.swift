@@ -109,6 +109,7 @@ public struct TimelineChart: View {
 public struct HoverView: View {
     @Binding var currentNumber: Double
     @Binding var currentLabel: String
+    
     var style: ChartStyle
     var valueSpecifier = "%.1f"
     
@@ -121,14 +122,16 @@ public struct HoverView: View {
             .font(.system(size: 18, weight: .bold))
             .offset(x: 0, y:-110)
             .foregroundColor(self.style.textColor)
+            
             RoundedRectangle(cornerRadius: 16)
-                .frame(width: 60, height: 280)
+                .frame(width: 60)
                 .foregroundColor(Color.white)
                 .shadow(color: Colors.LegendText, radius: 12, x: 0, y: 6 )
                 .blendMode(.multiply)
         }
     }
 }
+
 
 extension TimelineChart {
     public init(data: ChartData, lightStyle: ChartStyle = Styles.lineChartStyleOne, darkStyle: ChartStyle = Styles.lineViewDarkMode) {
@@ -138,9 +141,10 @@ extension TimelineChart {
     }
 }
 
-
+#if DEBUG
 struct TimelineChart_Previews: PreviewProvider {
     static var previews: some View {
-        TimelineChart(data: ChartData(values: [("test", 1)]))
+        TimelineChart(data: TestData.values)
     }
 }
+#endif
