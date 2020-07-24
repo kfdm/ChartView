@@ -10,16 +10,14 @@ import SwiftUI
 
 public struct TimelineChart: View {
     @ObservedObject var data: ChartData
-
+    
     // For hover state
     @State private var dragLocation:CGPoint = .zero
     @State private var indicatorLocation:CGPoint = .zero
-    @State private var closestPoint: CGPoint = .zero
-    @State private var opacity:Double = 0
     @State private var currentDataNumber: Double = 0
     @State private var currentDataString: String = ""
     @State private var showHovar: Bool = false
-
+    
     // Color styles
     @Environment(\.colorScheme) var colorScheme: ColorScheme
     public var lightStyle: ChartStyle
@@ -27,7 +25,11 @@ public struct TimelineChart: View {
     public var currentStyle: ChartStyle {
         return self.colorScheme == .dark ? darkStyle : lightStyle
     }
-
+    
+    // Constants
+    private let leftPadding :CGFloat = 30
+    private let verticalPadding: CGFloat = 20
+    
     public var body: some View {
         GeometryReader{ geometry in
             ZStack{
@@ -37,16 +39,14 @@ public struct TimelineChart: View {
                         frame: .constant(reader.frame(in: .local)),
                         hideHorizontalLines: self.$showHovar
                     )
-                    .transition(.opacity)
-                    .animation(Animation.easeOut(duration: 1).delay(1))
                     
                     Line(
                         data: self.data,
                         frame: .constant(CGRect(
                             x: 0,
                             y: 0,
-                            width: reader.frame(in: .local).width - 30,
-                            height: reader.frame(in: .local).height
+                            width: reader.frame(in: .local).width - leftPadding * 2,
+                            height: reader.frame(in: .local).height - verticalPadding * 2
                         )),
                         touchLocation: self.$indicatorLocation,
                         showIndicator: self.$showHovar,
@@ -55,52 +55,43 @@ public struct TimelineChart: View {
                         showBackground: false,
                         gradient: self.currentStyle.gradientColor
                     )
-                    // x offset for legend
-                    // y offset for hover padding
-                    .offset(x: 30, y: -20)
+                    .offset(x: leftPadding, y: verticalPadding * -1)
                 }
-                .offset(x: 0, y: 40 )
+                .offset(x: 0, y: verticalPadding * 2 )
                 
                 HoverView(
                     currentNumber: self.$currentDataNumber,
                     currentLabel:  self.$currentDataString,
                     style: currentStyle
                 )
-                .opacity(self.opacity)
+                .opacity(self.showHovar ? 1 : 0)
                 .offset(
                     x: self.dragLocation.x - geometry.frame(in: .local).size.width/2,
-                    y: 36
+                    y: verticalPadding
                 )
             }
-            .frame(
-                width: geometry.frame(in: .local).size.width,
-                height: 240
-            )
             .gesture(DragGesture()
                         .onChanged({ value in
                             self.dragLocation = value.location
                             self.indicatorLocation = CGPoint(
-                                x: max(value.location.x-30,0),
+                                x: max(value.location.x-leftPadding,0),
                                 y: 32
                             )
-                            self.opacity = 1
-                            self.closestPoint = self.getClosestDataPoint(
+                            self.getClosestDataPoint(
                                 toPoint: value.location,
-                                width: geometry.frame(in: .local).size.width-30,
-                                height: 240
+                                width: geometry.frame(in: .local).size.width-leftPadding,
+                                height: geometry.frame(in: .local).size.height
                             )
                             self.showHovar = true
                         })
                         .onEnded({ value in
-                            self.opacity = 0
                             self.showHovar = false
                         })
             )
-            
         }
     }
     
-    func getClosestDataPoint(toPoint: CGPoint, width:CGFloat, height: CGFloat) -> CGPoint {
+    @discardableResult func getClosestDataPoint(toPoint: CGPoint, width:CGFloat, height: CGFloat) -> CGPoint {
         let points = self.data.onlyPoints()
         let stepWidth: CGFloat = width / CGFloat(points.count-1)
         let stepHeight: CGFloat = height / CGFloat(points.max()! + points.min()!)
@@ -127,9 +118,9 @@ public struct HoverView: View {
                 Text("\(self.currentLabel)")
                 Text("\(self.currentNumber, specifier: valueSpecifier)")
             }
-                .font(.system(size: 18, weight: .bold))
-                .offset(x: 0, y:-110)
-                .foregroundColor(self.style.textColor)
+            .font(.system(size: 18, weight: .bold))
+            .offset(x: 0, y:-110)
+            .foregroundColor(self.style.textColor)
             RoundedRectangle(cornerRadius: 16)
                 .frame(width: 60, height: 280)
                 .foregroundColor(Color.white)
